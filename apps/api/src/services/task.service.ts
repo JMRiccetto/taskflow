@@ -132,4 +132,16 @@ export class TaskService {
     })
     if (!member) throw new ForbiddenError('Not a project member')
   }
+
+   async validateTitle(title: string ){
+
+    const trimmed = title.trim();
+
+    if (trimmed == "")
+      throw new Error ('Title cannot be empty')
+    if (trimmed.length < 3)
+      throw new Error('Title length must be at least 3 chracters long')
+    if (trimmed.length > 100)
+      throw new Error('Title length must be no more than 100 chracters long')
+  }
 }

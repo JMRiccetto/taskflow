@@ -5,6 +5,11 @@ App de gestión de tareas (tipo Jira simplificado) con suite completa de tests.
 
 ---
 
+# Datos del Proyecto
+Nombre: TDD en TaskFlow
+Integrantes: Joaquín Gasco, Juan Riccetto
+Descripción: Se deben solucionar los 3 ejercicios propuestos y realizar 3 tests sobre los mismos siguiendo TDD.
+
 ## Setup rápido
 
 > **TL;DR — tres comandos y ya:**
