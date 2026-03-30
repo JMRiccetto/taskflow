@@ -20,14 +20,7 @@ export const UpdateTaskSchema = z.object({
 export type CreateTaskInput = z.infer<typeof CreateTaskSchema>
 export type UpdateTaskInput = z.infer<typeof UpdateTaskSchema>
 
-// ── Enum de estados exportado (usado en validateStatusTransition) ──
-export enum TaskStatus {
-  TODO = 'TODO',
-  IN_PROGRESS = 'IN_PROGRESS',
-  DONE = 'DONE',
-}
-
-// Máquina de estados estricta para updateTask (mantiene lógica existente)
+// Valid state transitions
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
   TODO: ['IN_PROGRESS'],
   IN_PROGRESS: ['TODO', 'DONE'],
@@ -36,15 +29,8 @@ const VALID_TRANSITIONS: Record<Status, Status[]> = {
   DONE: [],
 }
 
-// Máquina de estados estricta del Ejercicio 2: solo avance, sin retroceso
-const STRICT_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.IN_PROGRESS]: [TaskStatus.DONE],
-  [TaskStatus.DONE]: [],
-}
-
 export class TaskService {
-  constructor(private db: PrismaClient) { }
+  constructor(private db: PrismaClient) {}
 
   async createTask(projectId: string, userId: string, input: CreateTaskInput) {
     const parsed = CreateTaskSchema.parse(input)
@@ -79,7 +65,7 @@ export class TaskService {
       if (!allowed.includes(parsed.status)) {
         throw new UnprocessableError(
           `Invalid transition: ${task.status} → ${parsed.status}. ` +
-          `Allowed: ${allowed.length ? allowed.join(', ') : 'none'}`
+            `Allowed: ${allowed.length ? allowed.join(', ') : 'none'}`
         )
       }
 
@@ -147,21 +133,15 @@ export class TaskService {
     if (!member) throw new ForbiddenError('Not a project member')
   }
 
-  validateTitle(title: string): void {
-    const trimmed = title.trim()
+   async validateTitle(title: string ){
 
-    if (trimmed === '')
-      throw new Error('El título no puede estar vacío')
+    const trimmed = title.trim();
+
+    if (trimmed == "")
+      throw new Error ('Title cannot be empty')
     if (trimmed.length < 3)
-      throw new Error('El título debe tener al menos 3 caracteres')
+      throw new Error('Title length must be at least 3 chracters long')
     if (trimmed.length > 100)
-      throw new Error('El título no puede superar los 100 caracteres')
-  }
-
-  validateStatusTransition(currentStatus: TaskStatus, newStatus: TaskStatus): void {
-    const allowed = STRICT_TRANSITIONS[currentStatus]
-    if (!allowed.includes(newStatus)) {
-      throw new Error(`Transición de estado inválida: ${currentStatus} → ${newStatus}`)
-    }
+      throw new Error('Title length must be no more than 100 chracters long')
   }
 }
