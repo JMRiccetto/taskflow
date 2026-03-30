@@ -27,7 +27,7 @@ export type RegisterInput = z.infer<typeof RegisterSchema>
 export type LoginInput = z.infer<typeof LoginSchema>
 
 export class AuthService {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient) { }
 
   async register(input: RegisterInput) {
     const parsed = RegisterSchema.parse(input)
@@ -116,6 +116,40 @@ export class AuthService {
 
   verifyToken(token: string): { userId: string } {
     return jwt.verify(token, JWT_SECRET) as { userId: string }
+  }
+
+  /**
+   * Maneja un intento de login fallido para el usuario dado.
+   * Incrementa failedAttempts y bloquea la cuenta al alcanzar MAX_FAILED_ATTEMPTS.
+   * BUG: usa > en vez de >= → la cuenta se bloquea al 6to intento, no al 5to.
+   */
+  async handleFailedLogin(userId: string): Promise<void> {
+    // Definimos el tipo local que esperamos del repositorio mockeado en tests
+    type UserForLocking = { id: string; failedAttempts: number; isLocked: boolean }
+    const repo = this.db.user as unknown as {
+      findUnique: (args: { where: { id: string } }) => Promise<UserForLocking | null>
+      update: (args: { where: { id: string }; data: Partial<UserForLocking> }) => Promise<UserForLocking>
+    }
+
+    const user = await repo.findUnique({ where: { id: userId } })
+    if (!user) return
+
+    // Si ya está bloqueada, el conteo se detiene
+    if (user.isLocked) return
+
+    const newFailedAttempts = user.failedAttempts + 1
+
+    // FIX BUG: >= MAX_FAILED_ATTEMPTS (antes era >)
+    // Ahora al llegar al 5to intento fallido la cuenta se bloquea correctamente
+    const shouldLock = newFailedAttempts >= MAX_FAILED_ATTEMPTS
+
+    await repo.update({
+      where: { id: userId },
+      data: {
+        failedAttempts: newFailedAttempts,
+        isLocked: shouldLock,
+      },
+    })
   }
 
   private generateToken(userId: string): string {
