@@ -26,7 +26,7 @@ vi.mock('../../src/services/auth.service', async (importOriginal) => {
   }
 })
 
-import { AuthService, ConflictError, UnauthorizedError } from '../../src/services/auth.service'
+import { ConflictError, UnauthorizedError } from '../../src/services/auth.service'
 
 const app = createApp()
 
