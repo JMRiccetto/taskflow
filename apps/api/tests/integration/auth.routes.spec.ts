@@ -7,15 +7,22 @@ import { createApp } from '../../src/app'
 // Here we mock the services to keep tests fast and isolated.
 // Integration tests with a real DB go in tests/integration/db/ using Testcontainers.
 
+const { mockAuthService } = vi.hoisted(() => {
+  return {
+    mockAuthService: {
+      register: vi.fn(),
+      login: vi.fn(),
+      verifyToken: vi.fn(),
+      handleFailedLogin: vi.fn(),
+    },
+  }
+})
+
 vi.mock('../../src/services/auth.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/services/auth.service')>()
   return {
     ...actual,
-    AuthService: vi.fn().mockImplementation(() => ({
-      register: vi.fn(),
-      login: vi.fn(),
-      verifyToken: vi.fn(),
-    })),
+    AuthService: vi.fn().mockImplementation(() => mockAuthService),
   }
 })
 
@@ -24,7 +31,7 @@ import { AuthService, ConflictError, UnauthorizedError } from '../../src/service
 const app = createApp()
 
 function getAuthServiceMock() {
-  return (AuthService as any).mock.results[0].value
+  return mockAuthService
 }
 
 // ════════════════════════════════════════════════════════════════
