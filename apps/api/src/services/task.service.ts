@@ -70,7 +70,7 @@ export class TaskService {
     })
     if (!task) throw new NotFoundError('Task not found')
 
-    const isMember = task.project.members.some((m) => m.userId === userId)
+    const isMember = task.project.members.some((m: { userId: string }) => m.userId === userId)
     if (!isMember) throw new ForbiddenError('Not a project member')
 
     // Validate state transition

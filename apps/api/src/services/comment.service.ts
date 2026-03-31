@@ -7,7 +7,7 @@ export const CreateCommentSchema = z.object({
 })
 
 export class CommentService {
-  constructor(private db: PrismaClient) {}
+  constructor(private db: PrismaClient) { }
 
   async addComment(taskId: string, userId: string, input: { body: string }) {
     const parsed = CreateCommentSchema.parse(input)
@@ -18,7 +18,7 @@ export class CommentService {
     })
     if (!task) throw new NotFoundError('Task not found')
 
-    const isMember = task.project.members.some((m) => m.userId === userId)
+    const isMember = task.project.members.some((m: { userId: string }) => m.userId === userId)
     if (!isMember) throw new ForbiddenError('Not a project member')
 
     return this.db.comment.create({
@@ -34,7 +34,7 @@ export class CommentService {
     })
     if (!task) throw new NotFoundError('Task not found')
 
-    const isMember = task.project.members.some((m) => m.userId === userId)
+    const isMember = task.project.members.some((m: { userId: string }) => m.userId === userId)
     if (!isMember) throw new ForbiddenError('Not a project member')
 
     // BUG-04: should be orderBy: { createdAt: 'asc' }
