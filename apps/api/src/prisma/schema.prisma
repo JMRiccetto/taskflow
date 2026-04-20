@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -57,8 +57,8 @@ model Task {
   id          String   @id @default(cuid())
   title       String
   description String?
-  status      Status   @default(TODO)
-  priority    Priority @default(MEDIUM)
+  status      String   @default("TODO")
+  priority    String   @default("MEDIUM")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -75,8 +75,8 @@ model Task {
 model StatusHistory {
   id        String   @id @default(cuid())
   taskId    String
-  from      Status
-  to        Status
+  from      String
+  to        String
   changedAt DateTime @default(now())
   changedBy String
 
@@ -95,15 +95,5 @@ model Comment {
   author   User   @relation(fields: [authorId], references: [id])
 }
 
-enum Status {
-  TODO
-  IN_PROGRESS
-  DONE
-}
 
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
-}
+

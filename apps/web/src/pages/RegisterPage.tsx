@@ -31,8 +31,9 @@ export default function RegisterPage() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Crear cuenta</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <label htmlFor="name-input" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
             <input
+              id="name-input"
               data-testid="register-name"
               type="text"
               value={name}
@@ -42,8 +43,9 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label htmlFor="email-input" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
+              id="email-input"
               data-testid="register-email"
               type="email"
               value={email}
@@ -53,8 +55,9 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+            <label htmlFor="password-input" className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input
+              id="password-input"
               data-testid="register-password"
               type="password"
               value={password}

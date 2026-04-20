@@ -1,4 +1,5 @@
-import { PrismaClient, Status, Priority } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
+import { Status, Priority } from '../prisma/enums'
 import { z } from 'zod'
 import { ForbiddenError, NotFoundError, UnprocessableError } from './auth.service'
 
