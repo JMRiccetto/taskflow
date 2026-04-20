@@ -36,7 +36,7 @@ export default function TaskCard({ task, projectId }: Props) {
         </span>
       </div>
       <div className="mt-2">
-        <span className="text-xs font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">
+        <span data-testid="status-badge" className="text-xs font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full">
           {task.status}
         </span>
       </div>
