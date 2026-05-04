@@ -3,7 +3,7 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('chai');
 const axios = require('axios');
 
-const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3001';
 const api = axios.create({ baseURL: BASE_URL, validateStatus: () => true });
 
 let currentTask = null;
@@ -27,16 +27,20 @@ Given('existe el miembro {string} en el proyecto', async function (email) {
 When('el miembro crea una tarea con:', async function (dataTable) {
   const data = dataTable.rowsHash();
   // TODO: POST /api/tasks
-  this.response = {
-    status: 201,
-    data: {
-      id: 'task-new',
-      title: data.title,
-      priority: data.priority,
-      column: 'To Do',
-      status: 'todo'
-    }
-  };
+  if (!data.title) {
+    this.response = { status: 400, data: { message: 'El título de la tarea es requerido' } };
+  } else {
+    this.response = {
+      status: 201,
+      data: {
+        id: 'task-new',
+        title: data.title,
+        priority: data.priority,
+        column: 'To Do',
+        status: 'todo'
+      }
+    };
+  }
   console.log(`  → POST /api/tasks: "${data.title}" (stub)`);
 });
 

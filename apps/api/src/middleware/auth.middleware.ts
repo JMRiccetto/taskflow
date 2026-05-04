@@ -33,8 +33,10 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
 
   // Handle Zod validation errors
   if (err.name === 'ZodError') {
+    const firstIssue = (err as any).issues?.[0];
     return res.status(400).json({
       error: 'Validation error',
+      message: firstIssue ? firstIssue.message : err.message,
       details: (err as any).issues || (err as any).errors || err.message
     })
   }

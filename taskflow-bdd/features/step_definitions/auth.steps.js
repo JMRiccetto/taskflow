@@ -6,7 +6,7 @@ const axios = require('axios');
 // ──────────────────────────────────────────────
 // CONFIGURACIÓN
 // ──────────────────────────────────────────────
-const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3001';
 const api = axios.create({ baseURL: BASE_URL, validateStatus: () => true });
 
 // ──────────────────────────────────────────────
@@ -28,19 +28,27 @@ Given('la base de datos está limpia', async function () {
 });
 
 Given('que el email {string} no está registrado', async function (email) {
-  console.log(`  → Email ${email} no registrado (stub)`);
+  // El servidor debería estar limpio por el background
 });
 
 Given('que el email {string} ya está registrado', async function (email) {
-  console.log(`  → Email ${email} ya registrado (stub)`);
+  await api.post('/api/auth/register', {
+    email,
+    password: 'ValidPass123!',
+    name: 'Usuario Existente'
+  });
 });
 
 Given('que ningún usuario está registrado', async function () {
-  console.log('  → Base de datos sin usuarios (stub)');
+  // Opcional: llamar a un endpoint de reset si existiera
 });
 
 Given('que existe el usuario con email {string} y password {string}', async function (email, password) {
-  console.log(`  → Creando usuario ${email} (stub)`);
+  await api.post('/api/auth/register', {
+    email,
+    password,
+    name: 'Test User'
+  });
 });
 
 // ──────────────────────────────────────────────
@@ -71,5 +79,11 @@ When('el usuario envía las credenciales:', async function (dataTable) {
 // ──────────────────────────────────────────────
 
 Then('el cuerpo contiene el campo {string}', function (field) {
-  expect(this.response.data).to.have.property(field);
+  const data = this.response.data;
+  // Soporte para campos anidados (como user.id)
+  if (data.user && data.user[field]) {
+    expect(data.user).to.have.property(field);
+  } else {
+    expect(data).to.have.property(field);
+  }
 });
