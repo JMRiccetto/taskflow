@@ -34,15 +34,19 @@ Given('existe un usuario con email {string} con rol {string}', async function (e
 When('el usuario crea un proyecto con:', async function (dataTable) {
   const data = dataTable.rowsHash();
   // TODO: POST /api/projects
-  this.response = {
-    status: 201,
-    data: {
-      id: 'proj-new',
-      name: data.name,
-      columns: ['To Do', 'In Progress', 'In Review', 'Done'],
-      owner: currentUser?.email
-    }
-  };
+  if (!data.name) {
+    this.response = { status: 400, data: { message: 'El nombre del proyecto es requerido' } };
+  } else {
+    this.response = {
+      status: 201,
+      data: {
+        id: 'proj-new',
+        name: data.name,
+        columns: ['To Do', 'In Progress', 'In Review', 'Done'],
+        owner: currentUser?.email
+      }
+    };
+  }
   console.log(`  → POST /api/projects: "${data.name}" (stub)`);
 });
 
