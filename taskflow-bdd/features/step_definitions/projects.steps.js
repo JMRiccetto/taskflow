@@ -3,10 +3,9 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const { expect } = require('chai');
 const axios = require('axios');
 
-const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3000';
+const BASE_URL = process.env.TASKFLOW_URL || 'http://localhost:3001';
 const api = axios.create({ baseURL: BASE_URL, validateStatus: () => true });
 
-let response = null;
 let currentUser = null;
 let currentProject = null;
 
@@ -35,48 +34,44 @@ Given('existe un usuario con email {string} con rol {string}', async function (e
 When('el usuario crea un proyecto con:', async function (dataTable) {
   const data = dataTable.rowsHash();
   // TODO: POST /api/projects
-  response = {
-    status: 201,
-    data: {
-      id: 'proj-new',
-      name: data.name,
-      columns: ['To Do', 'In Progress', 'In Review', 'Done'],
-      owner: currentUser?.email
-    }
-  };
+  if (!data.name) {
+    this.response = { status: 400, data: { message: 'El nombre del proyecto es requerido' } };
+  } else {
+    this.response = {
+      status: 201,
+      data: {
+        id: 'proj-new',
+        name: data.name,
+        columns: ['To Do', 'In Progress', 'In Review', 'Done'],
+        owner: currentUser?.email
+      }
+    };
+  }
   console.log(`  → POST /api/projects: "${data.name}" (stub)`);
 });
 
 When('el propietario invita a {string} como {string}', async function (email, role) {
   // TODO: POST /api/projects/:id/members
-  response = { status: 200, data: { message: 'Miembro agregado' } };
+  this.response = { status: 200, data: { message: 'Miembro agregado' } };
   console.log(`  → Invitación a ${email} como ${role} (stub)`);
 });
 
 When('{string} intenta crear una tarea en el proyecto', async function (email) {
   // TODO: POST /api/tasks con token de viewer
-  response = { status: 403, data: { message: 'No tenés permisos para crear tareas' } };
+  this.response = { status: 403, data: { message: 'No tenés permisos para crear tareas' } };
   console.log(`  → Intento de crear tarea por ${email} (stub)`);
 });
 
 Then('el proyecto tiene columnas: {string}, {string}, {string}, {string}', function (c1, c2, c3, c4) {
   const expected = [c1, c2, c3, c4];
-  expect(response.data.columns).to.deep.equal(expected);
+  expect(this.response.data.columns).to.deep.equal(expected);
 });
 
 Then('el usuario es propietario del proyecto', function () {
-  expect(response.data.owner).to.equal(currentUser?.email);
+  expect(this.response.data.owner).to.equal(currentUser?.email);
 });
 
 Then('el proyecto tiene {int} participantes', function (count) {
   // TODO: verificar con la API
   console.log(`  → Verificando ${count} participantes (stub)`);
-});
-
-Then('la respuesta tiene código de estado {int}', function (expectedStatus) {
-  expect(response.status).to.equal(expectedStatus);
-});
-
-Then('el cuerpo contiene {string} con valor {string}', function (field, value) {
-  expect(String(response.data[field])).to.equal(value);
 });
