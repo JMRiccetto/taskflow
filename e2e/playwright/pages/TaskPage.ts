@@ -6,7 +6,7 @@ export class TaskPage {
     async createTask(title: string, priority: string = 'MEDIUM') {
         await this.page.getByTestId('create-task-btn').click()
         await this.page.getByTestId('task-title-input').fill(title)
-        await this.page.selectOption('select', priority)
+        await this.page.getByTestId('task-priority-select').selectOption(priority)
         await this.page.getByTestId('task-submit').click()
     }
 
@@ -24,7 +24,6 @@ export class TaskPage {
     }
 
     async changeStatus(status: 'IN_PROGRESS' | 'DONE') {
-        const buttonName = status === 'IN_PROGRESS' ? 'Iniciar' : 'Completar'
-        await this.page.getByRole('button', { name: buttonName }).click()
+        await this.page.getByRole('button', { name: `→ ${status}` }).click()
     }
 }

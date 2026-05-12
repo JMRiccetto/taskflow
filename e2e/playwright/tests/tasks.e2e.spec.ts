@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { LoginPage } from '../../playwright/pages/LoginPage'
-import { TaskPage } from '../../playwright/pages/TaskPage'
+import { LoginPage } from '../pages/LoginPage'
+import { TaskPage } from '../pages/TaskPage'
 
 test.describe('Flujo de tareas con POM', () => {
     test.beforeEach(async ({ page }) => {
@@ -30,22 +30,20 @@ test.describe('Flujo de tareas con POM', () => {
 
     test('mover tarea de TODO a IN_PROGRESS', async ({ page }) => {
         const taskPage = new TaskPage(page)
-        // Usamos una de las tareas del seed
-        const title = 'Configurar CI/CD'
+        const title = `Mover esta tarea ${Date.now()}`
         
+        // 1. Crear la tarea en TODO
+        await taskPage.createTask(title, 'LOW')
+        await taskPage.expectTaskVisible(title)
+        
+        // 2. Abrirla y cambiar estado
         await taskPage.openTask(title)
-        // Esta tarea en el seed ya está en DONE. Vamos a buscar una en TODO.
-        // El seed crea: "Optimizar queries" en TODO
-        const todoTitle = 'Optimizar queries de la base de datos'
-        
-        await page.goto('/projects') // refrescar para asegurar
-        await page.getByText('seed-project').click()
-        
-        await taskPage.openTask(todoTitle)
         await taskPage.changeStatus('IN_PROGRESS')
         
-        await page.goBack() // Volver a la lista
-        const status = await taskPage.getTaskStatus(todoTitle)
+        // 3. Verificar en la lista
+        await page.goBack() 
+        await page.reload() // Asegurar que la lista se refresque
+        const status = await taskPage.getTaskStatus(title)
         expect(status).toBe('IN_PROGRESS')
     })
 })

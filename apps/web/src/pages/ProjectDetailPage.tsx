@@ -109,6 +109,7 @@ export default function ProjectDetailPage() {
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
           <select
+            data-testid="task-priority-select"
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
