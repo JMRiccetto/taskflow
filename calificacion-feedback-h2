@@ -1,0 +1,42 @@
+
+Lo que salió bien
+
+  - Tests de integración impecables. El patrón de mock con vi.hoisted / vi.mock + beforeAll para capturar la instancia mock está 
+    implementado de forma correcta y profesional.
+  - Page Objects bien diseñados. LoginPage y ProjectListPage encapsulan correctamente los selectores y no hay lógica de DOM en el
+    archivo .spec.ts. Eso es exactamente el principio POM.
+  - Cobertura de casos negativos. Cubrieron 401 en POST y GET, el 400 por título vacío, y el caso de nombre vacío en el formulario. Buenísimo.
+  - Aislamiento con Date.now(). Los tests e2e no fallan por usuarios duplicados gracias a este patrón. Excelente.
+
+
+
+Para corregir: 
+ 1. Typo en imports de projects.e2e.spec.ts (líneas 2-3)
+
+  Lo que tienen (funciona por casualidad):
+  import { LoginPage } from '../../playwrig../../playwright/pages/LoginPage'
+
+  Lo que debería decir:
+  import { LoginPage } from '../../playwright/pages/LoginPage'
+
+  El path actual funciona porque el OS resuelve playwrig.. como un directorio que no existe y ../.. vuelve un nivel, pero es un error 
+  que podría romper en algún sistema operativo con resolución de rutas estricta.
+
+  2. Estructura de carpetas — tests fuera de e2e/playwright/
+
+  La guía indica que tanto pages como tests deben estar dentro de e2e/playwright/. La estructura correcta sería:
+
+  e2e/
+  └── playwright/
+      ├── pages/          (lo tienen bien)
+      │   ├── LoginPage.ts
+      │   └── ProjectListPage.ts
+      └── tests/          ← acá deberían estar los .spec.ts
+          └── projects.e2e.spec.ts
+
+  Actualmente tienen los tests en e2e/tests/playwright/. Es una diferencia pequeña pero importante para seguir la convención del proyecto.
+
+Muy buen trabajo en general. El código es limpio, los tests son legibles, y la cobertura es la correcta. Con los ajustes de
+estructura de carpetas e imports quedaría perfecto.
+
+*** CALIFICACIÓN: 95/100 ***
