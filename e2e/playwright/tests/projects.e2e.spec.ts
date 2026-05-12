@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
-import { LoginPage } from '../../playwrig../../playwright/pages/LoginPage'
-import { ProjectListPage } from '../../playwrig../../playwright/pages/ProjectListPage'
+import { LoginPage } from '../pages/LoginPage'
+import { ProjectListPage } from '../pages/ProjectListPage'
 
 test.describe('Gestión de proyectos con POM', () => {
     test.beforeEach(async ({ page }) => {
