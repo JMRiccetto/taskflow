@@ -9,10 +9,12 @@ const MAX_FAILED_ATTEMPTS = 5
 const LOCK_DURATION_MINUTES = 15
 
 export const RegisterSchema = z.object({
-  email: z.string().email('Email inválido'),
+  email: z.string().email('Invalid email'),
   password: z
     .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[0-9]/, 'Password must contain a number'),
   name: z.string().optional(),
 })
 
@@ -34,7 +36,7 @@ export class AuthService {
       where: { email: parsed.email },
     })
     if (existing) {
-      throw new ConflictError('Email ya registrado')
+      throw new ConflictError('Email already registered')
     }
 
     const passwordHash = await bcrypt.hash(parsed.password, 12)

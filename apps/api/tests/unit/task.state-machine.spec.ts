@@ -34,6 +34,7 @@ const taskService = new TaskService(mockDb as any)
 describe('TaskService — máquina de estados (US-06)', () => {
 
   beforeEach(() => {
+    vi.clearAllMocks()
     mockDb.statusHistory.create.mockResolvedValue({})
     mockDb.task.update.mockResolvedValue({ id: 'task-1' })
   })
