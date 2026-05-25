@@ -67,7 +67,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_test
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
@@ -103,7 +103,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_bdd
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
@@ -139,7 +139,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_e2e
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
