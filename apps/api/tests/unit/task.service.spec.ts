@@ -7,6 +7,7 @@ const mockDb = {
     task: {
         findUnique: vi.fn(),
         update: vi.fn(),
+        findMany: vi.fn(),
     },
     statusHistory: { create: vi.fn() },
     projectMember: { findUnique: vi.fn() },
@@ -54,5 +55,24 @@ describe('TaskService.validateTitle — Ejercicio 1', () => {
     it('acepta título con exactamente 100 caracteres (valor límite)', () => {
         const title100 = 'a'.repeat(100)
         expect(() => taskService.validateTitle(title100)).not.toThrow()
+    })
+})
+
+describe('TaskService.getTasks & assertProjectMember', () => {
+    it('throws ForbiddenError if user is not a project member', async () => {
+        mockDb.projectMember.findUnique.mockResolvedValue(null)
+        await expect(taskService.getTasks('proj-1', 'user-1', {})).rejects.toThrow('Not a project member')
+    })
+
+    it('returns tasks if user is a project member', async () => {
+        mockDb.projectMember.findUnique.mockResolvedValue({ projectId: 'proj-1', userId: 'user-1' })
+        mockDb.task.findMany.mockResolvedValue([{ id: 'task-1', title: 'Task 1' }])
+        const result = await taskService.getTasks('proj-1', 'user-1', {
+            status: 'TODO' as any,
+            priority: 'MEDIUM' as any,
+            assignedTo: 'user-2',
+            search: 'test'
+        })
+        expect(result).toEqual([{ id: 'task-1', title: 'Task 1' }])
     })
 })

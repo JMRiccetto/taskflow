@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { TaskService } from '../../src/services/task.service'
 import { UnprocessableError } from '../../src/services/auth.service'
+import { Status } from '../../src/prisma/enums'
 
 const mockMember = { userId: 'user-1', role: 'MEMBER' }
 
@@ -34,6 +35,7 @@ const taskService = new TaskService(mockDb as any)
 describe('TaskService — máquina de estados (US-06)', () => {
 
   beforeEach(() => {
+    vi.clearAllMocks()
     mockDb.statusHistory.create.mockResolvedValue({})
     mockDb.task.update.mockResolvedValue({ id: 'task-1' })
   })
@@ -43,7 +45,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('TODO'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'IN_PROGRESS' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.IN_PROGRESS })
       ).resolves.toBeDefined()
     })
 
@@ -51,7 +53,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('IN_PROGRESS'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'DONE' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.DONE })
       ).resolves.toBeDefined()
     })
 
@@ -59,7 +61,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('IN_PROGRESS'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'TODO' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.TODO })
       ).resolves.toBeDefined()
     })
   })
@@ -69,7 +71,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('TODO'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'DONE' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.DONE })
       ).rejects.toThrow(UnprocessableError)
     })
 
@@ -77,7 +79,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('TODO'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'DONE' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.DONE })
       ).rejects.toThrow('TODO → DONE')
     })
 
@@ -88,7 +90,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('DONE'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'TODO' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.TODO })
       ).rejects.toThrow(UnprocessableError)
     })
 
@@ -96,7 +98,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('DONE'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'IN_PROGRESS' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.IN_PROGRESS })
       ).rejects.toThrow(UnprocessableError)
     })
 
@@ -104,7 +106,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('DONE'))
 
       await expect(
-        taskService.updateTask('task-1', 'user-1', { status: 'TODO' })
+        taskService.updateTask('task-1', 'user-1', { status: Status.TODO })
       ).rejects.toThrow('none')
     })
   })
@@ -113,7 +115,7 @@ describe('TaskService — máquina de estados (US-06)', () => {
     it('registra la transición en statusHistory', async () => {
       mockDb.task.findUnique.mockResolvedValue(makeTask('TODO'))
 
-      await taskService.updateTask('task-1', 'user-1', { status: 'IN_PROGRESS' })
+      await taskService.updateTask('task-1', 'user-1', { status: Status.IN_PROGRESS })
 
       expect(mockDb.statusHistory.create).toHaveBeenCalledWith({
         data: expect.objectContaining({

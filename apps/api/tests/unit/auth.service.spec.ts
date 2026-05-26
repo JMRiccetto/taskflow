@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { AuthService, ConflictError, UnauthorizedError } from '../../src/services/auth.service'
+import { AuthService, ConflictError, UnauthorizedError, NotFoundError, ForbiddenError, UnprocessableError } from '../../src/services/auth.service'
 
 // ── Mock PrismaClient ────────────────────────────────────────────
 const mockDb = {
@@ -216,6 +216,14 @@ describe('AuthService.login — US-02', () => {
       await expect(
         authService.login({ email: 'ana@test.com', password: 'Password1' })
       ).rejects.toThrow('locked')
+    })
+  })
+
+  describe('Custom Errors coverage', () => {
+    it('covers custom errors constructor', () => {
+      expect(() => { throw new NotFoundError('msg') }).toThrow('msg')
+      expect(() => { throw new ForbiddenError('msg') }).toThrow('msg')
+      expect(() => { throw new UnprocessableError('msg') }).toThrow('msg')
     })
   })
 })
