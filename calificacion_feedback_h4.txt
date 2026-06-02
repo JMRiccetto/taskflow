@@ -1,0 +1,18 @@
+CALIFICACIÓN TOTAL: 90/100
+
+CÓDIGO — 100/100
+Sin correcciones. Los 3 bugs corregidos, setup() completo, métricas y thresholds exactos.
+
+REPORTE — 80/100
+✓ Lo que hicieron bien
+
+Identificaron y describieron los 3 bugs con precisión, incluyendo líneas afectadas e impacto en la ejecución.
+Leyeron las métricas en el orden correcto (error rate → percentiles → throughput) y justificaron las conclusiones del load test correctamente.
+Propusieron un threshold propio para spike (p95 < 200ms) con justificación, en lugar de copiar el del load test.
+Diagnóstico del BUG-06 completo: síntoma, causa, ubicación exacta y clasificación ISTQB correcta (Performance Efficiency).
+
+✗ Lo que hay que corregir
+
+Parte 3, pregunta 1 — No seleccionaron ninguna categoría del módulo teórico. La respuesta esperada es Slow under heavy load.
+Parte 3, pregunta 2 — La justificación de recuperación es incompleta. Error rate en 0% demuestra ausencia de deadlocks, no recuperación de latencia. 
+Para confirmarlo hay que observar que los percentiles vuelven a niveles del load test cuando los VUs bajan a 0.
