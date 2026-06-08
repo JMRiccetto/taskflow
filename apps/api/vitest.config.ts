@@ -21,7 +21,13 @@ export default defineConfig({
         '**/*.d.ts',
       ],
     },
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup.ts', 'allure-vitest/setup'],
+    reporters: [
+      'default',
+      ['allure-vitest/reporter', {
+        resultsDir: 'allure-results',
+      }],
+    ],
     fileParallelism: false,
   },
 })
