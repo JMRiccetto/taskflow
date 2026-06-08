@@ -4,10 +4,13 @@ import { z } from 'zod'
 import { ForbiddenError, NotFoundError, UnprocessableError } from './auth.service'
 
 export const CreateTaskSchema = z.object({
-  title: z.string().min(3).max(200),
+  title: z.string({ required_error: 'El título de la tarea es requerido' })
+          .min(3, 'El título de la tarea es requerido')
+          .max(200),
   description: z.string().optional(),
   priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
   assignedTo: z.string().cuid().optional(),
+  status: z.literal('TODO').optional(),  // solo permite TODO o ausente
 })
 
 export const UpdateTaskSchema = z.object({
@@ -146,6 +149,7 @@ export class TaskService {
       where: { projectId_userId: { projectId, userId } },
     })
     if (!member) throw new ForbiddenError('Not a project member')
+    if (member.role === 'VIEWER') throw new ForbiddenError('No tenés permisos para crear tareas')
   }
 
   validateTitle(title: string): void {

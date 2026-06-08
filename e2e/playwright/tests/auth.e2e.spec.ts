@@ -22,7 +22,7 @@ test.describe('Autenticación con POM', () => {
         await loginPage.register('usuario@test.com', '123', 'Nombre')
         
         // El frontend muestra un mensaje genérico si no encuentra .message en la respuesta
-        await loginPage.expectErrorMessage('Password must be at least 8 characters')
+        await loginPage.expectErrorMessage('La contraseña debe tener al menos 8 caracteres')
     })
 
     test('muestra error con credenciales inválidas', async ({ page }) => {

@@ -63,7 +63,7 @@ describe('AuthService.register — US-01', () => {
     it('rechaza contraseña menor a 8 caracteres', async () => {
       await expect(
         authService.register({ ...validRegisterInput, password: 'Abc1' })
-      ).rejects.toThrow('at least 8 characters')
+      ).rejects.toThrow('al menos 8 caracteres')
     })
 
     it('rechaza contraseña sin mayúscula', async () => {
@@ -98,7 +98,7 @@ describe('AuthService.register — US-01', () => {
 
       await expect(
         authService.register(validRegisterInput)
-      ).rejects.toThrow('Email already registered')
+      ).rejects.toThrow('Email ya registrado')
     })
 
     it('llama a findUnique con el email correcto', async () => {

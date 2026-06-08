@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../src/app';
+import { createApp } from '../../src/app';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -58,6 +58,16 @@ describe('Tareas API — US-05', () => {
 
     expect(res.status).toBe(400);
     // El middleware de error devuelve "Validation error" para errores de Zod
+    expect(res.body.error).toMatch(/validation|error/i);
+  });
+
+  it('rechaza status inicial distinto de TODO con 400 (@US-05)', async () => {
+    const res = await request(app)
+      .post(`/projects/${projectId}/tasks`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ title: 'Tarea con status inválido', priority: 'MEDIUM', status: 'IN_PROGRESS' });
+
+    expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/validation|error/i);
   });
 });
