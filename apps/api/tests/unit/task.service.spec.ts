@@ -1,5 +1,6 @@
 // tests/unit/task.service.spec.ts
 import { describe, it, expect, vi } from 'vitest'
+import { allure } from 'allure-vitest'
 import { TaskService } from '../../src/services/task.service'
 
 // ── Stub del repositorio (sin levantar DB) ───────────────────────
@@ -21,6 +22,12 @@ describe('TaskService.validateTitle — Ejercicio 1', () => {
 
     // Caso 1: título con menos de 3 caracteres → error
     it('lanza error si el título tiene menos de 3 caracteres', () => {
+        allure.label('feature', 'Tareas');
+        allure.label('story', 'US-04');
+        allure.severity('normal');
+        allure.link('https://github.com/JMRiccetto/taskflow/issues/4', 'US-04-TaskTitleLength');
+        allure.description('Verifica que el título de la tarea debe tener al menos 3 caracteres');
+
         expect(() => taskService.validateTitle('ab')).toThrow(
             'El título debe tener al menos 3 caracteres'
         )

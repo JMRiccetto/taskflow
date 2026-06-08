@@ -1,5 +1,6 @@
 // tests/unit/auth.service.spec.ts
 import { describe, it, expect, vi } from 'vitest'
+import { allure } from 'allure-vitest'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { AuthService, ConflictError, UnauthorizedError, NotFoundError, ForbiddenError, UnprocessableError } from '../../src/services/auth.service'
@@ -51,6 +52,12 @@ describe('AuthService.register — US-01', () => {
     })
 
     it('acepta email válido', async () => {
+      allure.label('feature', 'Autenticación');
+      allure.label('story', 'US-01');
+      allure.severity('normal');
+      allure.link('https://github.com/JMRiccetto/taskflow/issues/1', 'US-01-Email');
+      allure.description('Verifica que el registro es exitoso si se proporciona un email válido');
+
       mockDb.user.findUnique.mockResolvedValue(null)
       mockDb.user.create.mockResolvedValue({ id: 'user-1', email: 'ana@test.com', name: 'Ana', createdAt: new Date() })
 
@@ -61,6 +68,12 @@ describe('AuthService.register — US-01', () => {
 
   describe('Criterio 2: contraseña con requisitos de seguridad', () => {
     it('rechaza contraseña menor a 8 caracteres', async () => {
+      allure.label('feature', 'Autenticación');
+      allure.label('story', 'US-01');
+      allure.severity('normal');
+      allure.link('https://github.com/JMRiccetto/taskflow/issues/2', 'US-01-PasswordLength');
+      allure.description('Verifica que el registro es rechazado si la contraseña tiene menos de 8 caracteres');
+
       await expect(
         authService.register({ ...validRegisterInput, password: 'Abc1' })
       ).rejects.toThrow('al menos 8 caracteres')
@@ -132,6 +145,12 @@ describe('AuthService.login — US-02', () => {
 
   describe('Criterio 1: login exitoso retorna JWT', () => {
     it('retorna token para credenciales válidas', async () => {
+      allure.label('feature', 'Autenticación');
+      allure.label('story', 'US-02');
+      allure.severity('critical');
+      allure.link('https://github.com/JMRiccetto/taskflow/issues/3', 'US-02-LoginSuccess');
+      allure.description('Verifica que un login exitoso retorna un token JWT válido para el usuario');
+
       const hash = await bcrypt.hash('Password1', 12)
       mockDb.user.findUnique.mockResolvedValue({ ...mockUser, passwordHash: hash })
       mockDb.user.update.mockResolvedValue({ ...mockUser })
@@ -180,6 +199,12 @@ describe('AuthService.login — US-02', () => {
 
   describe('Criterio 3: bloqueo por intentos fallidos', () => {
     it('bloquea la cuenta después de 5 intentos fallidos — BUG-05', async () => {
+      allure.label('feature', 'Autenticación');
+      allure.label('story', 'US-02');
+      allure.severity('critical');
+      allure.link('https://github.com/JMRiccetto/taskflow/issues/5', 'US-02-AccountLockout');
+      allure.description('Verifica el bloqueo de cuenta tras 5 intentos fallidos');
+
       const hash = await bcrypt.hash('Password1', 12)
       // Simula usuario con 5 intentos fallidos exactos (justo en el límite)
       mockDb.user.findUnique.mockResolvedValue({
@@ -196,13 +221,17 @@ describe('AuthService.login — US-02', () => {
       // La validación correcta sería que la cuenta YA esté bloqueada
 
       // Este test documenta el comportamiento buggy:
-      await expect(
-        authService.login({ email: 'ana@test.com', password: 'WrongPass1' })
-      ).rejects.toThrow(UnauthorizedError)
+      await allure.step('Intentar iniciar sesión con contraseña incorrecta', async () => {
+        await expect(
+          authService.login({ email: 'ana@test.com', password: 'WrongPass1' })
+        ).rejects.toThrow(UnauthorizedError)
+      })
 
       // Verificar que se llamó update con lockedUntil establecido
-      const updateCall = mockDb.user.update.mock.calls[0][0]
-      expect(updateCall.data.lockedUntil).toBeDefined()
+      await allure.step('Verificar que se llamó update con lockedUntil establecido', async () => {
+        const updateCall = mockDb.user.update.mock.calls[0][0]
+        expect(updateCall.data.lockedUntil).toBeDefined()
+      })
       // BUG: lockedUntil solo se setea cuando failedLogins > 5, no >= 5
       // En este caso failedLogins llegaría a 6 y recién ahí se bloquea
     })
