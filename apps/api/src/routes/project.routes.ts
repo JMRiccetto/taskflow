@@ -23,14 +23,20 @@ router.get('/', requireAuth, async (req: AuthRequest, res, next) => {
 router.post('/', requireAuth, async (req: AuthRequest, res, next) => {
   try {
     const project = await projectService.createProject(req.userId!, req.body)
-    res.status(201).json(project)
+    res.status(201).json({
+      ...project,
+      columns: ['To Do', 'In Progress', 'In Review', 'Done']
+    })
   } catch (err) { next(err) }
 })
 
 router.get('/:projectId', requireAuth, async (req: AuthRequest, res, next) => {
   try {
     const project = await projectService.getProject(req.params.projectId, req.userId!)
-    res.json(project)
+    res.json({
+      ...project,
+      columns: ['To Do', 'In Progress', 'In Review', 'Done']
+    })
   } catch (err) { next(err) }
 })
 
@@ -74,6 +80,14 @@ router.post('/:projectId/tasks/:taskId/comments', requireAuth, async (req: AuthR
   try {
     const comment = await commentService.addComment(req.params.taskId, req.userId!, req.body)
     res.status(201).json(comment)
+  } catch (err) { next(err) }
+})
+
+router.post('/:projectId/members', requireAuth, async (req: AuthRequest, res, next) => {
+  try {
+    const { email, role } = req.body
+    await projectService.addMember(req.params.projectId, req.userId!, email, role || 'MEMBER')
+    res.status(200).json({ message: 'Miembro agregado' })
   } catch (err) { next(err) }
 })
 

@@ -1,7 +1,7 @@
 # ============================================================
 # EP-02: Gestión de Proyectos y Tablero
 # US-03: Crear proyecto
-# US-04: Invitar miembro
+# US-04: Listar proyectos / Invitar miembro
 # ============================================================
 
 Feature: Gestión de proyectos
@@ -14,6 +14,7 @@ Feature: Gestión de proyectos
     And la base de datos está limpia
     And existe un usuario autenticado con email "owner@test.com"
 
+  @US-03
   Scenario: Crear proyecto con datos válidos
     When el usuario crea un proyecto con:
       | name        | TaskFlow Backend     |
@@ -23,12 +24,29 @@ Feature: Gestión de proyectos
     And el proyecto tiene columnas: "To Do", "In Progress", "In Review", "Done"
     And el usuario es propietario del proyecto
 
+  @US-03
   Scenario: No se puede crear un proyecto sin nombre
     When el usuario crea un proyecto con:
       | name        |                 |
       | description | Sin nombre      |
     Then la respuesta tiene código de estado 400
     And el cuerpo contiene "message" con valor "El nombre del proyecto es requerido"
+
+  @US-04
+  Scenario: Listar proyectos del usuario autenticado
+    And el usuario crea un proyecto con:
+      | name        | Proyecto Propio     |
+      | description | Del owner           |
+    When el usuario solicita listar sus proyectos
+    Then la respuesta tiene código de estado 200
+    And la lista contiene el proyecto "Proyecto Propio"
+
+  @US-04
+  Scenario: No se ven proyectos de otros usuarios
+    And que existe un proyecto "Proyecto Ajeno" del usuario "other@test.com"
+    When el usuario solicita listar sus proyectos
+    Then la respuesta tiene código de estado 200
+    And la lista no contiene el proyecto "Proyecto Ajeno"
 
   Scenario: Invitar a un miembro al proyecto
     Given que existe un proyecto "Mi Proyecto" del usuario "owner@test.com"

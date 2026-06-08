@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import request from 'supertest';
-import { createApp } from '../src/app';
+import { createApp } from '../../src/app';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -88,5 +88,24 @@ describe('Proyectos API — US-03 y US-04', () => {
     expect(list.status).toBe(200);
     // El segundo usuario no debe ver los proyectos del primero
     expect(list.body).toHaveLength(0);
+  });
+
+  // 2.2 — Happy path: GET /projects devuelve 200 con lista
+  it('devuelve 200 con lista de proyectos (@US-04)', async () => {
+    // Crear un proyecto para el usuario
+    await request(app)
+      .post('/projects')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Proyecto de Prueba US-04', description: 'Para listar' });
+
+    const res = await request(app)
+      .get('/projects')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toBeInstanceOf(Array);
+    expect(res.body.length).toBeGreaterThan(0);
+    const hasProject = res.body.some((p: any) => p.name === 'Proyecto de Prueba US-04');
+    expect(hasProject).toBe(true);
   });
 });
