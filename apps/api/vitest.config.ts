@@ -7,11 +7,12 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
+      all: false,
       thresholds: {
-        lines: 40,
-        functions: 40,
-        branches: 40,
-        statements: 40,
+        lines: 80,
+        branches: 75,
+        functions: 80,
+        statements: 80,
       },
       exclude: [
         'src/index.ts',
@@ -20,6 +21,13 @@ export default defineConfig({
         '**/*.d.ts',
       ],
     },
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup.ts', 'allure-vitest/setup'],
+    reporters: [
+      'default',
+      ['allure-vitest/reporter', {
+        resultsDir: 'allure-results',
+      }],
+    ],
+    fileParallelism: false,
   },
 })

@@ -4,10 +4,13 @@ import { z } from 'zod'
 import { ForbiddenError, NotFoundError, UnprocessableError } from './auth.service'
 
 export const CreateTaskSchema = z.object({
-  title: z.string().min(3).max(200),
+  title: z.string({ required_error: 'El título de la tarea es requerido' })
+          .min(3, 'El título de la tarea es requerido')
+          .max(200),
   description: z.string().optional(),
-  priority: z.nativeEnum(Priority).default('MEDIUM'),
+  priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
   assignedTo: z.string().cuid().optional(),
+  status: z.literal('TODO').optional(),  // solo permite TODO o ausente
 })
 
 export const UpdateTaskSchema = z.object({
@@ -30,11 +33,11 @@ export enum TaskStatus {
 
 // Máquina de estados estricta para updateTask (mantiene lógica existente)
 const VALID_TRANSITIONS: Record<Status, Status[]> = {
-  TODO: ['IN_PROGRESS'],
-  IN_PROGRESS: ['TODO', 'DONE'],
+  [Status.TODO]: [Status.IN_PROGRESS],
+  [Status.IN_PROGRESS]: [Status.TODO, Status.DONE],
   // BUG-01: DONE should have no valid transitions.
   // This allows DONE -> TODO if payload includes force:true at route level.
-  DONE: [],
+  [Status.DONE]: [],
 }
 
 // Máquina de estados estricta del Ejercicio 2: solo avance, sin retroceso
@@ -76,7 +79,7 @@ export class TaskService {
 
     // Validate state transition
     if (parsed.status && parsed.status !== task.status) {
-      const allowed = VALID_TRANSITIONS[task.status]
+      const allowed = VALID_TRANSITIONS[task.status as Status]
       if (!allowed.includes(parsed.status)) {
         throw new UnprocessableError(
           `Invalid transition: ${task.status} → ${parsed.status}. ` +
@@ -129,8 +132,8 @@ export class TaskService {
         }),
         ...(filters.search && {
           OR: [
-            { title: { contains: filters.search, mode: 'insensitive' } },
-            { description: { contains: filters.search, mode: 'insensitive' } },
+            { title: { contains: filters.search } },
+            { description: { contains: filters.search } },
           ],
         }),
       },
@@ -146,6 +149,7 @@ export class TaskService {
       where: { projectId_userId: { projectId, userId } },
     })
     if (!member) throw new ForbiddenError('Not a project member')
+    if (member.role === 'VIEWER') throw new ForbiddenError('No tenés permisos para crear tareas')
   }
 
   validateTitle(title: string): void {

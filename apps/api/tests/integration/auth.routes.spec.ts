@@ -56,15 +56,15 @@ describe('POST /auth/register', () => {
 
   it('409 — email ya registrado', async () => {
     getAuthServiceMock().register.mockRejectedValue(
-      new ConflictError('Email already registered')
+      new ConflictError('Email ya registrado')
     )
 
     const res = await request(app)
       .post('/auth/register')
-      .send({ email: 'ana@test.com', password: 'Password1' })
+      .send({ email: 'tester@test.com', password: 'Password1' })
 
     expect(res.status).toBe(409)
-    expect(res.body.error).toMatch(/already registered/i)
+    expect(res.body.error).toMatch(/ya registrado/i)
   })
 
   it('400 — password débil', async () => {

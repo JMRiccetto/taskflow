@@ -3,7 +3,9 @@ import { z } from 'zod'
 import { ConflictError, ForbiddenError, NotFoundError } from './auth.service'
 
 export const CreateProjectSchema = z.object({
-  name: z.string().min(3).max(100),
+  name: z.string({ required_error: 'El nombre del proyecto es requerido' })
+         .min(3, 'El nombre del proyecto es requerido')
+         .max(100),
   description: z.string().max(500).optional(),
 })
 
@@ -82,6 +84,31 @@ export class ProjectService {
     return this.db.project.update({
       where: { id: projectId },
       data: { archived: true },
+    })
+  }
+
+  async addMember(projectId: string, ownerId: string, email: string, role: string) {
+    const project = await this.db.project.findUnique({
+      where: { id: projectId },
+      include: { members: true },
+    })
+    if (!project) throw new NotFoundError('Project not found')
+    if (project.ownerId !== ownerId) throw new ForbiddenError('Only the owner can invite members')
+
+    const user = await this.db.user.findUnique({
+      where: { email },
+    })
+    if (!user) throw new NotFoundError('User not found')
+
+    const existing = project.members.some((m) => m.userId === user.id)
+    if (existing) throw new ConflictError('User already a member of this project')
+
+    return this.db.projectMember.create({
+      data: {
+        projectId,
+        userId: user.id,
+        role: role.toUpperCase(),
+      },
     })
   }
 }

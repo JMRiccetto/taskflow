@@ -1,0 +1,220 @@
+================================================================================
+HITO 3 — EQUIPO 1 — TASKFLOW
+================================================================================
+
+CALIFICACION FINAL:  (92/100)
+
+| Seccion                              | Pts obtenidos | Pts max |
+|--------------------------------------|:---:|:---:|
+| A. Endpoints + integration tests     |  17 |  25 |
+| B. Gherkin US-01..05 en verde        |  35 |  35 |
+| C. Contrato Pact                     |  20 |  20 |
+| D. Calidad (lint + tsc + coverage)   |  20 |  20 |
+| TOTAL                                |  92 | 100 |
+
+Escala: A >= 90 | B >= 80 | C >= 70 | D >= 60 | F < 60
+
+================================================================================
+LO QUE ESTUVO BIEN
+================================================================================
+
+- Pact al 100%: consumer genera el contrato y provider lo verifica sin fallas.
+  El stateHandler, el requestFilter con JWT, y la ubicacion del archivo pacts/
+  estan perfectos.
+
+- Calidad de codigo excelente: cero errores de TypeScript, cero errores de lint
+  (solo warnings cosmeticos), cobertura de lineas al 95% — muy por encima del
+  umbral requerido del 70%.
+
+- Tests de integracion con DB real son solidos: tests/projects.integration.test.ts
+  cubre los tres casos de US-03 correctamente y el test de aislamiento por usuario
+  de US-04 es correcto. tests/tasks.integration.test.ts cubre happy path con
+  priority y prioridad invalida.
+
+- US-02 BDD verde contra la API real: los dos escenarios de login llaman al
+  servidor real y pasan correctamente.
+
+================================================================================
+LO QUE NECESITA CORRECCION — INSTRUCCIONES PARA EL EQUIPO
+================================================================================
+[AVISO: SE EVALUARA EN LA ENTREGA FINAL LA APLICACION DE LAS CORRECCIONES]
+------------------------------------------------------------------------
+PROBLEMA 1 — Tests de integracion no corren con el script test:integration
+------------------------------------------------------------------------
+
+QUE PASA:
+tests/projects.integration.test.ts y tests/tasks.integration.test.ts existen
+y son buenos, pero el script test:integration ejecuta "vitest run tests/integration"
+y solo levanta archivos dentro de tests/integration/. Los tests reales quedan
+fuera de la carrera. Por eso US-03 y US-04 reciben credito parcial en lugar
+de puntaje completo.
+
+COMO ARREGLARLO
+
+Mover los archivos:
+
+    apps/api/tests/
+      integration/
+        auth.routes.spec.ts         <- ya esta
+        tasks.routes.spec.ts        <- ya esta
+        projects.routes.spec.ts     <- mover projects.integration.test.ts aqui
+        tasks.db.spec.ts            <- mover tasks.integration.test.ts aqui
+
+
+------------------------------------------------------------------------
+PROBLEMA 2 — Falta el happy path de GET /api/projects en integracion (US-04)
+------------------------------------------------------------------------
+
+QUE PASA:
+El test con 2 usuarios existe, pero no hay ningun test que
+verifique el happy path basico: GET /api/projects devuelve 200 con una lista.
+
+COMO ARREGLARLO — agregar en tests/projects.integration.test.ts:
+
+    it('devuelve 200 con lista de proyectos (@US-04)', async () => {
+      ...
+      ...
+      ...
+    });
+
+------------------------------------------------------------------------
+PROBLEMA 3 — Falta validacion y test de status inicial != TODO (US-05)
+------------------------------------------------------------------------
+
+QUE PASA:
+La API actualmente ignora el campo status al crear una tarea (siempre pone
+'TODO'). No valida ni rechaza si el cliente manda un status diferente. Tampoco
+hay test para este caso.
+
+COMO ARREGLARLO:
+
+Paso 1 — Agregar validacion en src/services/task.service.ts.
+Opcion simple: agregar un check manual al inicio de createTask():
+
+Opcion con Zod: agregar el campo al schema con literal:
+
+    export const CreateTaskSchema = z.object({
+      title: z.string().min(3).max(200),
+      description: z.string().optional(),
+      priority: z.nativeEnum(Priority).default(Priority.MEDIUM),
+      assignedTo: z.string().cuid().optional(),
+      status: z.literal('TODO').optional(),  // solo permite TODO o ausente
+    })
+
+Paso 2 — Agregar el test en tests/tasks.integration.test.ts:
+
+    it('rechaza status inicial distinto de TODO con 400 (@US-05)', async () => {
+      ...
+      ...
+    });
+
+------------------------------------------------------------------------
+PROBLEMA 4 — Mensajes de error en ingles (BDD US-01)
+------------------------------------------------------------------------
+
+QUE PASA:
+Los escenarios de registro fallido en auth.feature esperan mensajes en espanol:
+  - "Email ya registrado"
+  - "La contrasena debe tener al menos 8 caracteres"
+  - "Email invalido"
+
+Pero la API devuelve mensajes en ingles desde Zod y desde los errores custom:
+  - "Email already registered"
+  - "Password must be at least 8 characters"
+  - "Invalid email"
+
+Se otorga puntaje completo en este hito, pero SE EVALUARA LA CORRECCION
+EN LA ENTREGA FINAL DEL PROYECTO.
+
+------------------------------------------------------------------------
+PROBLEMA 5 — npm run test:bdd desde la raiz encuentra 0 escenarios
+------------------------------------------------------------------------
+
+QUE PASA:
+El script test:bdd del package.json raiz delega a apps/api, que ejecuta
+cucumber-js sin features locales -> 0 escenarios. Los BDD reales estan en
+taskflow-bdd/ con su propio package.json.
+
+La carpeta taskflow-bdd/ es valida como ubicacion. Sin embargo, si deciden
+mantenerla ahi, hay que conectar los scripts para que el comando del monorepo
+realmente la ejecute.
+
+COMO ARREGLARLO — elegir una opcion:
+
+Opcion A — Ajustar el script en el package.json raiz:
+
+    "test:bdd": "npm test --prefix taskflow-bdd"
+
+Opcion B — Integrar BDD dentro de apps/api:
+
+    1. Mover taskflow-bdd/features/ a apps/api/features/
+    2. Mover taskflow-bdd/cucumber.cjs a apps/api/
+    3. El script en apps/api ya es correcto:
+       "test:bdd": "dotenv -e .env.test --override -- cucumber-js"
+
+------------------------------------------------------------------------
+PROBLEMA 6 — US-04 en BDD es "Invitar miembro", no "Listar proyectos"
+[AVISO: SE EVALUARA EN LA ENTREGA FINAL]
+------------------------------------------------------------------------
+
+QUE PASA:
+La projects.feature etiqueta US-04 como "Invitar a un miembro al proyecto".
+La US-04 de la rubrica es GET /api/projects (listar proyectos del usuario
+autenticado). Los escenarios de "invitar miembro" pasan y se otorgan los
+puntos en este hito, pero SE EVALUARA LA CORRECCION EN LA ENTREGA FINAL.
+
+COMO ARREGLARLO — agregar en projects.feature (o en un feature dedicado):
+
+    Scenario: Listar proyectos del usuario autenticado
+      Given ...
+      When ...
+      Then ...
+      And ...
+
+    Scenario: No se ven proyectos de otros usuarios
+      Given ...
+      When ...
+      Then ...
+
+Y en el step definition, reemplazar el stub por una llamada real a
+GET /api/projects con el token del usuario autenticado.
+
+------------------------------------------------------------------------
+PROBLEMA 7 — Step definitions de US-03/US-04/US-05 usan stubs
+------------------------------------------------------------------------
+
+QUE PASA:
+Los projects.steps.js y tasks.steps.js hardcodean respuestas en vez de llamar
+a la API real. Los escenarios pasan, pero no validan el sistema. Si la API
+tuviera un bug, los tests BDD no lo detectarian.
+
+COMO ARREGLARLO — ejemplo para projects.steps.js:
+
+    // Reemplazar el stub en "When el usuario crea un proyecto con:"
+    When('el usuario crea un proyecto con:', async function (dataTable) {
+      const data = dataTable.rowsHash();
+      this.response = await api.post('/api/projects', {
+        name: data.name,
+        description: data.description,
+      }, {
+        headers: { Authorization: `Bearer ${currentUser.token}` }
+      });
+    });
+
+    // Y el Given que registra al usuario debe ser real:
+    Given('existe un usuario autenticado con email {string}', async function (email) {
+      const res = await api.post('/api/auth/register', {
+        email,
+        password: 'ValidPass123!',
+        name: 'Owner'
+      });
+      currentUser = { email, token: res.data.token };
+    });
+
+El mismo patron aplica para tasks.steps.js: cada When debe hacer la llamada
+HTTP real en lugar de devolver un objeto hardcodeado.
+
+================================================================================
+RECORDATORIO — TODOS LOS ITEMS A CORREGIR ANTES DE LA ENTREGA FINAL, SE EVALUARÁ
+SI LA CORRECCION SE HACE O NO
+================================================================================

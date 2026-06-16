@@ -1,15 +1,12 @@
 import { Verifier } from '@pact-foundation/pact';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { createApp } from '../../src/app';
 import { PrismaClient } from '@prisma/client';
 import { generateTestJWT } from '../helpers/auth.helper';
 import type { AddressInfo } from 'net';
 import { beforeAll, afterAll, describe, it } from 'vitest';
 
-// Para ESM __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname is globally available in CommonJS target
 
 const app = createApp();
 const prisma = new PrismaClient();

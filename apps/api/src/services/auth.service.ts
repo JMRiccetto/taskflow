@@ -12,7 +12,9 @@ export const RegisterSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z
     .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+    .regex(/[0-9]/, 'Password must contain a number'),
   name: z.string().optional(),
 })
 

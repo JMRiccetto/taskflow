@@ -5,6 +5,7 @@ on:
     branches: ['**']
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 env:
   NODE_VERSION: '20'
@@ -66,7 +67,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_test
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
@@ -102,7 +103,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_bdd
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
@@ -138,7 +139,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://taskflow:testpassword@localhost:5432/taskflow_e2e
+      DATABASE_URL: file:./test.db
       JWT_SECRET: test-secret-for-ci
     steps:
       - uses: actions/checkout@v4
@@ -147,7 +148,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npx prisma migrate deploy && npx prisma db seed
         working-directory: apps/api
       - name: Run E2E tests
