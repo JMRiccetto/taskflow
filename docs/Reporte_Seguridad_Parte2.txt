@@ -1,0 +1,170 @@
+# Reporte de Seguridad - Parte 2
+
+Este documento recopila las pruebas de seguridad y análisis realizados sobre el proyecto TaskFlow según lo solicitado en la **Parte 2** de la guía práctica.
+
+---
+
+## Paso 1 — Análisis de dependencias (`npm audit`)
+
+### Ejecución en el backend (`apps/api`)
+Comando ejecutado:
+```bash
+cd apps/api
+npm audit --audit-level=high
+```
+**Resultado**:
+* Se encontraron **5 vulnerabilidades de severidad alta** (además de 14 moderadas y 2 críticas que se reportan en el análisis general).
+* Las vulnerabilidades de severidad alta encontradas en dependencias directas o indirectas de la API incluyen:
+  * **form-data**: Inyección CRLF a través de nombres y campos multipartes no escapados.
+  * **lodash**: Inyección de código y contaminación de prototipos.
+  * **path-to-regexp**: Denegación de servicio por expresiones regulares (ReDoS).
+  * **tmp**: Escritura arbitraria de archivos temporales mediante manipulación de rutas.
+
+### Ejecución en la raíz del proyecto
+Comando ejecutado:
+```bash
+npm audit --audit-level=moderate
+```
+**Resultado**:
+* Se detectaron **26 vulnerabilidades en total** (1 de nivel bajo, 16 moderadas, 6 de nivel alto y 3 críticas).
+* Entre ellas destaca la vulnerabilidad crítica en:
+  * **shell-quote**: Falta de escape de nuevas líneas (`\n`) en valores operacionales, lo que expone a inyección de comandos en terminales.
+
+---
+
+## Paso 2 — Obtención de token JWT
+
+Petición de inicio de sesión realizada para la usuaria **Alice**:
+```bash
+curl -s -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"alice@taskflow.dev","password":"Password1"}'
+```
+
+**Token A obtenido**:
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXAzNXN5OWwwMDAwMTI5eHZxdXQ5a3dqIiwiaWF0IjoxNzgyMTgxMTM3LCJleHAiOjE3ODIyNjc1Mzd9.HK9m7EfYKuRBL2315hOZpOcGlWggFoFOtUVKPEUC1UI
+```
+
+---
+
+## Paso 3 — Inspección de cabeceras de seguridad
+
+### Pruebas ejecutadas:
+1. Inspección de salud (endpoint `/health`):
+   ```bash
+   curl -I http://localhost:3001/health
+   ```
+2. Inspección de endpoint protegido (`/projects`):
+   ```bash
+   curl -I http://localhost:3001/projects \
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXAzNXN5OWwwMDAwMTI5eHZxdXQ5a3dqIiwiaWF0IjoxNzgyMTgxMTM3LCJleHAiOjE3ODIyNjc1Mzd9.HK9m7EfYKuRBL2315hOZpOcGlWggFoFOtUVKPEUC1UI"
+   ```
+
+### Cabeceras obtenidas:
+```http
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+Content-Type: application/json; charset=utf-8
+Content-Length: 15
+ETag: W/"f-VaSQ4oDUiZblZNAEkkN+sX+q3Sg"
+Date: Tue, 23 Jun 2026 02:19:15 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+```
+
+**Resultado de verificación**:
+* ❌ **Faltan las siguientes cabeceras de seguridad**:
+  * `Content-Security-Policy`
+  * `Strict-Transport-Security`
+  * `X-Frame-Options`
+  * `X-Content-Type-Options`
+* ⚠️ **Exposición innecesaria**: Se incluye `X-Powered-By: Express`, revelando la tecnología del servidor de aplicaciones.
+
+---
+
+## Paso 4 — Prueba de IDOR (Insecure Direct Object Reference)
+
+### 1. Creación de un proyecto privado como Alice
+Petición:
+```bash
+curl -s -X POST http://localhost:3001/projects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <TOKEN_A>" \
+  -d '{"name":"Proyecto Privado de Alice"}'
+```
+**ID del proyecto creado**: `cmqq0o34i0001wig3rgdtegmj`
+
+### 2. Inicio de sesión como Bob
+Petición:
+```bash
+curl -s -X POST http://localhost:3001/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"bob@taskflow.dev","password":"Password1"}'
+```
+**Token B obtenido**:
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbXAzNXN5OW4wMDAxMTI5eHBxcmxzdDdnIiwiaWF0IjoxNzgyMTgxMjI2LCJleHAiOjE3ODIyNjc2MjZ9.3BFpCskpoO3JfcjkfWf7ysMzhLFv1f48vl_DMjDqkJ8
+```
+
+### 3. Prueba de IDOR
+Petición realizada por Bob intentando obtener el proyecto de Alice:
+```bash
+curl -i -s http://localhost:3001/projects/cmqq0o34i0001wig3rgdtegmj \
+  -H "Authorization: Bearer <TOKEN_B>"
+```
+**Respuesta del servidor**:
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json; charset=utf-8
+
+{"error":"Not a project member","message":"Not a project member"}
+```
+
+**Resultado**:
+* El control de acceso funciona correctamente. El backend rechaza la petición con un error `403 Forbidden` al detectar que Bob no es miembro del proyecto de Alice.
+
+---
+
+## Documentación de Hallazgos (Plantilla de Reporte)
+
+A continuación se detallan los 2 hallazgos de seguridad identificados:
+
+### Hallazgo SEC-01: Vulnerabilidades críticas y altas en dependencias de terceros
+* **ID**: SEC-01
+* **Título**: Múltiples vulnerabilidades de severidad alta y crítica en dependencias de npm.
+* **Severidad**: Alta / Crítica
+* **Descripción**: La ejecución de auditorías automatizadas mediante npm revela que el proyecto utiliza paquetes vulnerables a fallas conocidas de inyección de código (`lodash`), inyección de comandos en consolas (`shell-quote`), denegación de servicio (`path-to-regexp` / ReDoS), y escritura/manipulación de archivos locales (`tmp`).
+* **Pasos de reproducción**:
+  1. Acceder al monorepositorio localmente.
+  2. Ejecutar `npm audit --audit-level=high` dentro del directorio `apps/api` o `npm audit --audit-level=moderate` desde la raíz.
+  3. Visualizar los listados de avisos de seguridad que detallan los CVE y las dependencias afectadas.
+* **Impacto**:
+  * Un atacante podría provocar la denegación de servicio de la API de TaskFlow (ReDoS).
+  * Posible secuestro o alteración de flujos de ejecución en el servidor si se explotan los métodos vulnerables de inyección de código/comandos.
+* **Remediación**:
+  * Ejecutar `npm audit fix` para parchar componentes compatibles de forma automática.
+  * Realizar actualizaciones de dependencias conflictivas (como `vite`, `vitest` y `@cucumber/cucumber`) modificando manualmente las versiones en el `package.json` para eliminar las versiones obsoletas e inseguras.
+
+### Hallazgo SEC-02: Ausencia de cabeceras de seguridad HTTP y divulgación de firma del servidor
+* **ID**: SEC-02
+* **Título**: Falta de cabeceras de protección del lado del cliente y exposición de firma de middleware.
+* **Severidad**: Media
+* **Descripción**: La API Express no configura ni retorna cabeceras de seguridad estándar que protegen al navegador contra exploits comunes de ejecución de scripts y enmarcado. Asimismo, expone la firma tecnológica del backend `X-Powered-By: Express`.
+* **Pasos de reproducción**:
+  1. Levantar el backend con `npm run dev`.
+  2. Enviar una petición a cualquier endpoint público o privado (ej. `curl -I http://localhost:3001/health`).
+  3. Examinar las cabeceras HTTP de respuesta recibidas y constatar la ausencia de CSP, HSTS, `X-Frame-Options` y `X-Content-Type-Options`.
+* **Impacto**:
+  * Mayor susceptibilidad a ataques de Cross-Site Scripting (XSS) y Clickjacking al no indicarle al navegador restricciones de origen o renderizado.
+  * Divulgación de la tecnología del backend, facilitando a actores maliciosos la personalización de ataques enfocados a vulnerabilidades específicas del framework Express.
+* **Remediación**:
+  * Agregar el paquete `helmet` al backend: `npm install helmet --workspace=apps/api`.
+  * Integrar el middleware en `apps/api/src/app.ts`:
+    ```typescript
+    import helmet from 'helmet';
+    // ...
+    app.use(helmet());
+    ```
+    Esto desactiva automáticamente `X-Powered-By` y provee cabeceras CSP, HSTS, X-Frame-Options y X-Content-Type-Options robustas por defecto.

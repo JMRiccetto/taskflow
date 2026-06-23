@@ -1,0 +1,91 @@
+# Reporte de Accesibilidad - Parte 3
+
+Este documento resume los resultados de la auditoría de accesibilidad realizada sobre el proyecto TaskFlow utilizando **axe-core** e **Playwright** en la **Parte 3** de la guía práctica.
+
+---
+
+## Ejecución Inicial del Test
+
+Comando ejecutado:
+```bash
+npx playwright test e2e/playwright/tests/ally.spec.ts --reporter=line
+```
+
+### Violaciones Identificadas (Antes de Corregir)
+
+En la corrida inicial se detectaron múltiples violaciones de accesibilidad serias:
+
+#### 1. Color Contrast (Contraste de Color)
+* **ID / Regla axe**: `color-contrast`
+* **Criterio de Éxito WCAG 2.1**: **SC 1.4.3: Contraste (Mínimo)**
+* **Nivel**: AA
+* **Impacto**: Serious (Serio)
+* **Elementos Afectados**:
+  * **Botón "Entrar"**: `<button data-testid="login-submit">Entrar</button>` (Fondo `bg-teal-600` con texto blanco, ratio de contraste ~4.13:1, requiere 4.5:1).
+  * **Enlace "Registrate"**: `<a href="/register">Registrate</a>` (Texto `text-teal-600` sobre fondo blanco).
+  * **Logo "TaskFlow"**: `<a href="/projects">TaskFlow</a>` (Texto `text-teal-600` sobre fondo blanco).
+  * **Botón "+ Nuevo proyecto"**: `<button data-testid="create-project-btn">+ Nuevo proyecto</button>` (Fondo `bg-teal-600` con texto blanco).
+
+#### 2. Link in Text Block (Enlace en bloque de texto)
+* **ID / Regla axe**: `link-in-text-block`
+* **Criterio de Éxito WCAG 2.1**: **SC 1.4.1: Uso del Color**
+* **Nivel**: A
+* **Impacto**: Serious (Serio)
+* **Elemento Afectado**:
+  * **Enlace "Registrate"**: `<a href="/register">Registrate</a>` en el bloque de texto "¿No tenés cuenta? Registrate". Al carecer de subrayado por defecto (solo con hover), la única forma de distinguirlo del texto circundante es el color.
+
+---
+
+## Correcciones Aplicadas
+
+Para subsanar las violaciones, se modificaron los componentes del frontend en `apps/web/src/`:
+
+### 1. Corrección de Contraste (`color-contrast`)
+* Se modificó el color de fondo de los botones principales de `bg-teal-600` a `bg-teal-700` (y su hover correspondiente a `bg-teal-800`).
+* Se modificó el color de los enlaces principales (como el Logo y el enlace a registro) de `text-teal-600` a `text-teal-700`.
+* **Impacto técnico**: El contraste de la combinación `#0f766e` (teal-700) con `#ffffff` (blanco) es de **5.75:1**, lo cual supera holgadamente el umbral de 4.5:1 requerido por el criterio WCAG AA.
+* **Archivos modificados**:
+  * [`apps/web/src/pages/LoginPage.tsx`](file:///Users/joaquingasco/Desktop/1erS_2026/testing/taskflow/apps/web/src/pages/LoginPage.tsx)
+  * [`apps/web/src/pages/ProjectsPage.tsx`](file:///Users/joaquingasco/Desktop/1erS_2026/testing/taskflow/apps/web/src/pages/ProjectsPage.tsx)
+  * [`apps/web/src/components/Navbar.tsx`](file:///Users/joaquingasco/Desktop/1erS_2026/testing/taskflow/apps/web/src/components/Navbar.tsx)
+
+### 2. Corrección de Enlaces en Bloque de Texto (`link-in-text-block`)
+* Se agregó la clase `underline` por defecto al enlace "Registrate" en `LoginPage.tsx` (cambiando `hover:underline` a `underline`).
+* **Impacto técnico**: Ahora el enlace se diferencia visualmente del texto normal a través del subrayado, cumpliendo con el criterio de no depender únicamente del color para transmitir interactividad.
+* **Archivo modificado**:
+  * [`apps/web/src/pages/LoginPage.tsx`](file:///Users/joaquingasco/Desktop/1erS_2026/testing/taskflow/apps/web/src/pages/LoginPage.tsx)
+
+---
+
+## Verificación de las Correcciones
+
+Se volvió a ejecutar el test de accesibilidad en Playwright tras aplicar las correcciones:
+```bash
+npx playwright test e2e/playwright/tests/ally.spec.ts --reporter=line
+```
+
+### Resultados de la Re-ejecución:
+```text
+Running 4 tests using 4 workers
+
+[1/4] [chromium] › e2e/playwright/tests/ally.spec.ts:23:7 › Accesibilidad WCAG 2.1 AA - TaskFlow › Vista Proyectos - sin violaciones WCAG 2.1 AA
+[2/4] [chromium] › e2e/playwright/tests/ally.spec.ts:6:7 › Accesibilidad WCAG 2.1 AA - TaskFlow › Vista Login - sin violaciones WCAG 2.1 AA
+[3/4] [Mobile Safari] › e2e/playwright/tests/ally.spec.ts:6:7 › Accesibilidad WCAG 2.1 AA - TaskFlow › Vista Login - sin violaciones WCAG 2.1 AA
+[4/4] [Mobile Safari] › e2e/playwright/tests/ally.spec.ts:23:7 › Accesibilidad WCAG 2.1 AA - TaskFlow › Vista Proyectos - sin violaciones WCAG 2.1 AA
+
+[Mobile Safari] › e2e/playwright/tests/ally.spec.ts:6:7 › ...
+Total violaciones Login: 0
+
+[chromium] › e2e/playwright/tests/ally.spec.ts:6:7 › ...
+Total violaciones Login: 0
+
+[Mobile Safari] › e2e/playwright/tests/ally.spec.ts:23:7 › ...
+Total violaciones Proyectos: 0
+
+[chromium] › e2e/playwright/tests/ally.spec.ts:23:7 › ...
+Total violaciones Proyectos: 0
+
+  4 passed (2.2s)
+```
+
+**Conclusión**: Las violaciones de accesibilidad WCAG 2.1 AA en la vista de Login y Proyectos fueron solucionadas por completo (0 violaciones encontradas).
