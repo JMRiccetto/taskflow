@@ -1,0 +1,97 @@
+Reporte de Hallazgos - Parte 4
+
+Este documento reúne las plantillas completas de los hallazgos reales de seguridad y accesibilidad identificados en el proyecto TaskFlow, junto con sus correspondientes User Stories de remediación, según lo solicitado en la Parte 4 del práctico.
+
+================================================================================
+4.1 Hallazgos de Seguridad
+================================================================================
+
+--------------------------------------------------------------------------------
+Hallazgo de Seguridad N.° 01
+--------------------------------------------------------------------------------
+ID:                     SEC-01
+Título:                 Múltiples vulnerabilidades de nivel alto y crítico en dependencias de npm.
+Severidad:              HIGH
+Descripción:            La ejecución de auditorías automatizadas mediante npm revela que el proyecto utiliza paquetes desactualizados que contienen vulnerabilidades conocidas de inyección de código (lodash), inyección de comandos (shell-quote), ReDoS (path-to-regexp) y escritura/manipulación de archivos temporales locales (tmp).
+Pasos de reproducción:  1. Acceder al directorio raíz del proyecto en la terminal.
+                        2. Ejecutar "npm audit --audit-level=moderate".
+                        3. Revisar el reporte y constatar las alertas generadas para los distintos paquetes.
+Impacto:                * Denegación de servicio (DoS) del backend de TaskFlow si un atacante explota rutas vulnerables de expresiones regulares (ReDoS).
+                        * Compromiso o ejecución de código/comandos arbitrarios en el servidor a través de librerías vulnerables (ej. shell-quote).
+Remediación propuesta:  * Ejecutar "npm audit fix" para solucionar parches seguros.
+                        * Actualizar manualmente en package.json las dependencias principales a versiones seguras (como vitest, vite y @cucumber/cucumber).
+
+--------------------------------------------------------------------------------
+Hallazgo de Seguridad N.° 02
+--------------------------------------------------------------------------------
+ID:                     SEC-02
+Título:                 Ausencia de cabeceras de seguridad HTTP básicas y divulgación de firma del servidor.
+Severidad:              MEDIUM
+Descripción:            El backend Express no configura ni responde con cabeceras HTTP de seguridad fundamentales (CSP, HSTS, X-Frame-Options, X-Content-Type-Options) y expone abiertamente el header "X-Powered-By: Express".
+Pasos de reproducción:  1. Levantar la aplicación con "npm run dev".
+                        2. Ejecutar "curl -I http://localhost:3001/health".
+                        3. Examinar las cabeceras HTTP de respuesta recibidas para constatar la ausencia de CSP/HSTS/Clickjacking protections y la presencia de "X-Powered-By: Express".
+Impacto:                * Vulnerabilidad a ataques de clickjacking y cross-site scripting (XSS) debido a la falta de políticas restrictivas en el navegador.
+                        * Divulgación de la firma tecnológica del backend, permitiendo a atacantes buscar exploits específicos.
+Remediación propuesta:  * Instalar e integrar el middleware "helmet" en apps/api/src/app.ts (app.use(helmet())) para deshabilitar automáticamente "X-Powered-By" y proveer cabeceras robustas.
+
+================================================================================
+4.2 Hallazgos de Accesibilidad
+================================================================================
+
+--------------------------------------------------------------------------------
+Hallazgo de Accesibilidad N.° 01
+--------------------------------------------------------------------------------
+ID:                     ACC-01
+SC WCAG 2.1:            SC 1.4.3: Contraste (Mínimo)
+Nivel:                  AA
+Principio POUR:         Perceptible
+Vista afectada:         Vista Login (Botón "Entrar") y Vista Proyectos (Botón "+ Nuevo proyecto")
+Descripción del fallo:  El fondo de botón "bg-teal-600" con texto de color blanco "text-white" posee un contraste de 4.13:1, inferior al ratio mínimo de 4.5:1 exigido para texto normal bajo el estándar WCAG 2.1 AA.
+Fix propuesto:          Reemplazar la clase "bg-teal-600" por "bg-teal-700" (#0f766e) en los botones del frontend, alcanzando un ratio de contraste de 5.75:1.
+
+--------------------------------------------------------------------------------
+Hallazgo de Accesibilidad N.° 02
+--------------------------------------------------------------------------------
+ID:                     ACC-02
+SC WCAG 2.1:            SC 1.4.1: Uso del Color
+Nivel:                  A
+Principio POUR:         Perceptible
+Vista afectada:         Vista Login (Enlace "Registrate")
+Descripción del fallo:  El enlace de registro dentro del bloque de texto se diferenciaba de este exclusivamente a través del color (text-teal-600), careciendo de una distinción no cromática (como subrayado por defecto), violando el principio de no depender exclusivamente del color.
+Fix propuesto:          Aplicar la clase "underline" por defecto al enlace en LoginPage.tsx para que sea distinguible de forma estática estructural.
+
+--------------------------------------------------------------------------------
+Hallazgo de Accesibilidad N.° 03
+--------------------------------------------------------------------------------
+ID:                     ACC-03
+SC WCAG 2.1:            SC 1.4.3: Contraste (Mínimo)
+Nivel:                  AA
+Principio POUR:         Perceptible
+Vista afectada:         Navbar (Logo "TaskFlow") y Vista Login (Enlace "Registrate")
+Descripción del fallo:  El texto coloreado con "text-teal-600" sobre el fondo blanco tiene un contraste de 4.13:1, lo cual afecta la visualización de enlaces y elementos destacados para usuarios con dificultades de visión.
+Fix propuesto:          Cambiar el texto a la clase "text-teal-700" (#0f766e), elevando la relación de contraste seguro a 5.75:1.
+
+================================================================================
+4.3 User Stories de remediación
+================================================================================
+
+--------------------------------------------------------------------------------
+US de Seguridad — Hallazgo más crítico
+--------------------------------------------------------------------------------
+Como:                   Desarrollador del sistema / Administrador de seguridad.
+Quiero:                 Actualizar dependencias de producción críticas y ocultar la firma tecnológica del backend.
+Para:                   Reducir la superficie de ataque mitigando riesgos de inyección de comandos e identificación automatizada del servidor.
+CA-01:                  La ejecución de "npm audit --audit-level=high" en la carpeta apps/api no debe arrojar vulnerabilidades de nivel crítico ni alto.
+CA-02:                  Todas las respuestas HTTP del backend deben excluir la cabecera "X-Powered-By".
+CA-03:                  La suite de pruebas de integración de la API debe pasar al 100% tras la actualización de las dependencias.
+
+--------------------------------------------------------------------------------
+US de Accesibilidad — Hallazgo más grave
+--------------------------------------------------------------------------------
+Como:                   Usuario con baja visión o dificultades visuales.
+Quiero:                 Que los botones y enlaces de la aplicación tengan un contraste de color de al menos 4.5:1.
+Para:                   Identificar y leer los elementos accionables del sistema de manera clara, autónoma y sin fatiga ocular.
+CA-01:                  Todos los botones de acción principal (ej. "Entrar", "+ Nuevo proyecto") deben poseer una relación de contraste superior a 4.5:1 contra el texto blanco.
+CA-02:                  Los enlaces embebidos en bloques de texto deben tener subrayado u otra distinción no basada únicamente en el color.
+CA-03:                  El analizador Axe-Builder integrado en Playwright debe retornar 0 fallas de contraste en todas las pruebas de regresión.

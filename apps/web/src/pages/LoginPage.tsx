@@ -64,14 +64,14 @@ export default function LoginPage() {
           <button
             data-testid="login-submit"
             type="submit"
-            className="w-full bg-teal-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-teal-700"
+            className="w-full bg-teal-700 text-white rounded-lg py-2 text-sm font-medium hover:bg-teal-800"
           >
             Entrar
           </button>
         </form>
         <p className="text-sm text-gray-500 mt-4 text-center">
           ¿No tenés cuenta?{' '}
-          <Link to="/register" className="text-teal-600 hover:underline">
+          <Link to="/register" className="text-teal-700 underline hover:text-teal-800">
             Registrate
           </Link>
         </p>

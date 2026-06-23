@@ -21,6 +21,7 @@
     "allure:report": "npm run allure:report --workspace=apps/api"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
     "@cucumber/cucumber": "^10.8.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.44.0",
