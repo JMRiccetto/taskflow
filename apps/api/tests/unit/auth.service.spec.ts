@@ -1,6 +1,6 @@
 // tests/unit/auth.service.spec.ts
 import { describe, it, expect, vi } from 'vitest'
-import { allure } from 'allure-vitest'
+import * as allure from 'allure-js-commons'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { AuthService, ConflictError, UnauthorizedError, NotFoundError, ForbiddenError, UnprocessableError } from '../../src/services/auth.service'

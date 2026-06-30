@@ -1,6 +1,6 @@
 // tests/unit/task.service.spec.ts
 import { describe, it, expect, vi } from 'vitest'
-import { allure } from 'allure-vitest'
+import * as allure from 'allure-js-commons'
 import { TaskService } from '../../src/services/task.service'
 
 // ── Stub del repositorio (sin levantar DB) ───────────────────────
